@@ -1,0 +1,12 @@
+body { font-family: sans-serif; margin: 0; padding: 0; }
+header { background: #0f172a; color: #fff; padding: 1rem; }
+nav a { color: #fff; margin-right: 1rem; }
+main { padding: 1rem; }
+table { border-collapse: collapse; width: 100%; }
+td, th { border: 1px solid #ddd; padding: 0.5rem; }
+.signal-health .metrics { display: flex; gap: 2rem; margin-bottom: 1rem; }
+.signal-health .metric { background: #f1f5f9; padding: 1rem; border-radius: 0.5rem; }
+.signal-health .feature-list { list-style: none; padding: 0; }
+.signal-health .feature-list li { margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; }
+.signal-health .grafana-links { list-style: none; padding: 0; }
+.signal-health .grafana-links li { margin-bottom: 0.5rem; }

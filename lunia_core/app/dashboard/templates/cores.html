@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<section>
+  <h2>Управление ядрами</h2>
+  <ul>
+    {% for name, info in cores.items() %}
+      <li><strong>{{ name }}</strong>: enabled={{ info.get('enabled') }}, weight={{ info.get('weight') }}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

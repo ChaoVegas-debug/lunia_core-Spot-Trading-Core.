@@ -1,0 +1,92 @@
+.command-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(12px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 120px;
+  z-index: 1200;
+}
+
+.command-panel {
+  width: min(520px, 92vw);
+  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 28px 48px rgba(15, 23, 42, 0.55);
+  display: grid;
+  gap: 12px;
+}
+
+.command-input {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #e2e8f0;
+  font-size: 1rem;
+}
+
+.command-input:focus {
+  outline: none;
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.command-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  display: grid;
+  gap: 8px;
+}
+
+.command-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: rgba(15, 23, 42, 0.55);
+  color: #e2e8f0;
+  text-align: left;
+  transition: all 0.2s ease-in-out;
+}
+
+.command-item:hover,
+.command-item.active {
+  border-color: rgba(56, 189, 248, 0.45);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(244, 114, 182, 0.18));
+}
+
+.command-label {
+  font-weight: 600;
+}
+
+.command-hint {
+  font-size: 0.85rem;
+  color: rgba(226, 232, 240, 0.75);
+}
+
+.command-meta {
+  font-size: 0.85rem;
+  color: rgba(226, 232, 240, 0.65);
+}
+
+.command-empty {
+  padding: 18px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  color: rgba(226, 232, 240, 0.75);
+  text-align: center;
+}

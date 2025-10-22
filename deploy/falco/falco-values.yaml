@@ -1,0 +1,46 @@
+falco:
+  jsonOutput: true
+  programOutput:
+    enabled: true
+    program: "jq -rc ."
+  grpc:
+    enabled: true
+  grpcOutput:
+    enabled: true
+  webserver:
+    enabled: true
+    nodePort: 32647
+    k8sServiceType: ClusterIP
+  ebpf:
+    enabled: true
+    driver:
+      kind: modern_ebpf
+    settings:
+      cpus_for_each_syscall_buffer: 1
+  logLevel: info
+
+resources:
+  requests:
+    cpu: 150m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+integrations:
+  containerd:
+    enabled: true
+  docker:
+    enabled: true
+
+customRulesFiles:
+  - /etc/falco/falco-rules.local.yaml
+
+extraVolumes:
+  - name: lunia-falco-rules
+    configMap:
+      name: falco-lunia-rules
+extraVolumeMounts:
+  - name: lunia-falco-rules
+    mountPath: /etc/falco/falco-rules.local.yaml
+    subPath: falco-rules.local.yaml

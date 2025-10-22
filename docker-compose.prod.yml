@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  api:
+    extends:
+      file: lunia_core/infra/docker-compose.yml
+      service: api
+    environment:
+      APP_ENV: production
+      INFRA_PROD_ENABLED: "true"
+      BINANCE_LIVE_TRADING: "true"
+      BINANCE_FORCE_MOCK: "false"
+
+  scheduler:
+    extends:
+      file: lunia_core/infra/docker-compose.yml
+      service: scheduler
+    environment:
+      APP_ENV: production
+      INFRA_PROD_ENABLED: "true"
+
+  arbitrage:
+    extends:
+      file: lunia_core/infra/docker-compose.yml
+      service: arbitrage
+    environment:
+      APP_ENV: production
+      INFRA_PROD_ENABLED: "true"
+
+  bot:
+    extends:
+      file: lunia_core/infra/docker-compose.yml
+      service: bot
+    environment:
+      APP_ENV: production
+      INFRA_PROD_ENABLED: "true"
+
+  redis:
+    extends:
+      file: lunia_core/infra/docker-compose.yml
+      service: redis
+
+  prometheus:
+    extends:
+      file: lunia_core/infra/docker-compose.yml
+      service: prometheus
+
+  grafana:
+    extends:
+      file: lunia_core/infra/docker-compose.yml
+      service: grafana
+
+  caddy:
+    extends:
+      file: lunia_core/infra/docker-compose.yml
+      service: caddy
+
+volumes:
+  redis-data:
+    external: false

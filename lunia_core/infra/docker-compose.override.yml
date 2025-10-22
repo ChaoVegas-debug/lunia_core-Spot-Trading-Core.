@@ -1,0 +1,5 @@
+services:
+  api:
+    environment:
+      PYTHONPATH: /opt/app
+      FLASK_APP: app.services.api.flask_app

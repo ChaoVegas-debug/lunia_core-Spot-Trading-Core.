@@ -1,0 +1,14 @@
+## Copy this file to docker-compose.override.yml to customise local development.
+services:
+  api:
+    environment:
+      PYTHONPATH: /opt/app
+      FLASK_APP: app.services.api.flask_app
+      FLASK_ENV: development
+      EXCHANGE_MODE: mock
+    volumes:
+      - ../logs:/opt/app/lunia_core/logs
+  bot:
+    profiles: [bot]
+    environment:
+      EXCHANGE_MODE: mock

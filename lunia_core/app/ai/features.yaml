@@ -1,0 +1,35 @@
+{
+  "features": {
+    "momentum": {
+      "description": "Simple price momentum over configurable lookbacks.",
+      "tags": ["spot", "futures", "core"],
+      "metrics": [
+        {"name": "momentum_5", "window": 5},
+        {"name": "momentum_20", "window": 20}
+      ]
+    },
+    "volatility": {
+      "description": "Rolling standard deviation normalised by price level.",
+      "tags": ["risk", "monitoring"],
+      "metrics": [
+        {"name": "realized_volatility_10", "window": 10},
+        {"name": "realized_volatility_30", "window": 30}
+      ]
+    },
+    "kalman_level": {
+      "description": "Smoothed price level using 1D Kalman filter.",
+      "tags": ["research", "filters"],
+      "metrics": [{"name": "kalman_smoothed", "window": 0}]
+    },
+    "wavelet_denoise": {
+      "description": "Haar wavelet approximation for noise reduction.",
+      "tags": ["research", "filters"],
+      "metrics": [{"name": "wavelet_smoothed", "window": 0}]
+    },
+    "hmm_regime": {
+      "description": "Two state HMM probability of being in volatile regime.",
+      "tags": ["research", "regime"],
+      "metrics": [{"name": "hmm_high_vol_prob", "window": 0}]
+    }
+  }
+}

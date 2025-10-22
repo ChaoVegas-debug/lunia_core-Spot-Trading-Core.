@@ -1,0 +1,16 @@
+[DEFAULT]
+bantime = 1h
+findtime = 10m
+maxretry = 5
+banaction = crowdsec
+
+[nginx-http-auth]
+port    = http,https
+logpath = /var/log/nginx/error.log
+backend = auto
+
+[lunia-api]
+port    = http,https
+logpath = /var/log/modsecurity/audit.log
+backend = auto
+enabled = true

@@ -1,0 +1,33 @@
+[sources.lunia_logs]
+  type = "file"
+  include = ["/opt/lunia_core/logs/**/*.log"]
+  ignore_older_secs = 604800
+
+[transforms.normalize_json]
+  type = "remap"
+  inputs = ["lunia_logs"]
+  source = """
+  .tenant = .tenant ?? getenv!("TENANT_ID", "global")
+  .service = .service ?? "lunia-core"
+  .environment = getenv!("LUNIA_ENV", "staging")
+  """
+
+[sinks.elasticsearch]
+  type = "elasticsearch"
+  inputs = ["normalize_json"]
+  endpoint = "${ELASTIC_ENDPOINT:-http://elasticsearch:9200}"
+  index = "lunia-core-%Y.%m.%d"
+  auth.strategy = "basic"
+  auth.user = "${ELASTIC_USER:-elastic}"
+  auth.password = "${ELASTIC_PASSWORD:-changeme}"
+  tls.verify_certificate = true
+
+[sinks.s3_archive]
+  type = "aws_s3"
+  inputs = ["normalize_json"]
+  bucket = "${LOG_ARCHIVE_BUCKET:-lunia-audit-archive}"
+  region = "${AWS_REGION:-eu-central-1}"
+  compression = "gzip"
+  encoding.codec = "json"
+  key_prefix = "logs/%Y/%m/%d/"
+  auth.strategy = "instance_profile"

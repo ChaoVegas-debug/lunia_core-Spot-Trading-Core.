@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  api:
+    extends:
+      file: lunia_core/infra/docker-compose.yml
+      service: api
+    environment:
+      APP_ENV: staging
+      FRONTEND_SIGNAL_HEALTH_ENABLED: "true"
+      INFRA_PROD_ENABLED: "false"
+
+  scheduler:
+    extends:
+      file: lunia_core/infra/docker-compose.yml
+      service: scheduler
+    environment:
+      APP_ENV: staging
+
+  arbitrage:
+    extends:
+      file: lunia_core/infra/docker-compose.yml
+      service: arbitrage
+    environment:
+      APP_ENV: staging
+
+  bot:
+    extends:
+      file: lunia_core/infra/docker-compose.yml
+      service: bot
+    environment:
+      APP_ENV: staging
+
+  redis:
+    extends:
+      file: lunia_core/infra/docker-compose.yml
+      service: redis
+
+  prometheus:
+    extends:
+      file: lunia_core/infra/docker-compose.yml
+      service: prometheus
+
+  grafana:
+    extends:
+      file: lunia_core/infra/docker-compose.yml
+      service: grafana
+
+volumes:
+  redis-data:
+    external: false

@@ -1,0 +1,19 @@
+[Unit]
+Description=Lunia Core Docker Stack
+Requires=docker.service
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/lunia_core/lunia_core
+Environment=COMPOSE_FILE=/opt/lunia_core/lunia_core/docker-compose.prod.yml
+ExecStart=/usr/bin/docker compose -f /opt/lunia_core/lunia_core/docker-compose.prod.yml up -d
+ExecStop=/usr/bin/docker compose -f /opt/lunia_core/lunia_core/docker-compose.prod.yml down -v
+RemainAfterExit=yes
+TimeoutStartSec=0
+TimeoutStopSec=120
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

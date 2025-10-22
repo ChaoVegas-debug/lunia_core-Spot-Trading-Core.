@@ -1,0 +1,2 @@
+# Custom ModSecurity rules for Lunia Core perimeter
+SecRule RESPONSE_STATUS "@streq 500" "id:11001,phase:5,log,pass,msg:'Internal server error observed via WAF'"

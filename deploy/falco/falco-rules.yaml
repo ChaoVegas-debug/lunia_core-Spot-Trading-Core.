@@ -1,0 +1,27 @@
+- rule: Lunia Python Exec
+  desc: Detect unexpected python binaries or scripts executed inside the container
+  condition: >
+    spawned_process and proc.name = python* and not proc.pname in ("python", "gunicorn", "uvicorn", "dumb-init")
+  output: "Unexpected python execution (user=%user.name process=%proc.name parent=%proc.pname cmd=%proc.cmdline)"
+  priority: WARNING
+
+- rule: Lunia Swap Modification
+  desc: Alert when swap devices are modified outside of the encrypted swap helper
+  condition: >
+    open_write and fd.name startswith "/dev/mapper/" and not proc.name in ("enable_encrypted_swap.sh", "swapon", "mkswap")
+  output: "Unauthorized swap write detected (proc=%proc.name file=%fd.name)"
+  priority: WARNING
+
+- rule: Lunia AppArmor Reload
+  desc: Track AppArmor reloads inside the container
+  condition: >
+    evt.type in (execve) and proc.name = apparmor_parser and not user.name in ("root")
+  output: "AppArmor parser invoked (user=%user.name cmd=%proc.cmdline)"
+  priority: NOTICE
+
+- rule: Lunia Shell Spawn
+  desc: Prevent interactive shells from being spawned in production containers
+  condition: >
+    spawned_process and proc.name in ("bash", "sh") and container
+  output: "Interactive shell spawned (user=%user.name cmd=%proc.cmdline container=%container.id)"
+  priority: ERROR

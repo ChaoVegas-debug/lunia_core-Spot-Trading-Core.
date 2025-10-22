@@ -1,0 +1,112 @@
+name: CI
+on:
+  push:
+    branches: ["main", "work"]
+  pull_request:
+
+jobs:
+  lint-test-smoke:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lunia_core
+    env:
+      EXCHANGE_MODE: mock
+      QUOTE_PREF: auto
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+      - name: Lint
+        run: make lint
+      - name: Pytest (full)
+        run: make test
+      - name: Pytest (offline)
+        run: make test-offline
+      - name: Prepare environment file
+        run: cp .env.example .env
+      - name: Docker smoke
+        run: |
+          make build
+          make up
+          sleep 15
+          make smoke
+        env:
+          BASE_URL: http://localhost:8080
+      - name: Docker logs snapshot
+        if: always()
+        run: docker compose -f infra/docker-compose.yml logs --tail=200
+      - name: Docker teardown
+        if: always()
+        run: make down
+
+  ui-e2e:
+    runs-on: ubuntu-latest
+    needs: lint-test-smoke
+    defaults:
+      run:
+        working-directory: lunia_core
+    env:
+      EXCHANGE_MODE: mock
+      QUOTE_PREF: auto
+      PLAYWRIGHT_BASE_URL: http://localhost:8000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+      - name: Install Playwright browsers
+        run: playwright install --with-deps chromium
+      - name: Prepare environment file
+        run: cp .env.example .env
+      - name: Build and start stack
+        run: |
+          make build
+          make up
+          sleep 20
+      - name: UI e2e (feature enabled)
+        env:
+          FRONTEND_SIGNAL_HEALTH_ENABLED: "true"
+        run: pytest -q tests/frontend/e2e
+      - name: Shutdown stack after enabled run
+        run: make down
+      - name: Disable Signal Health flag
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          env_path = Path('.env')
+          if env_path.exists():
+              lines = env_path.read_text().splitlines()
+          else:
+              lines = []
+          updated = False
+          for idx, line in enumerate(lines):
+              if line.startswith('FRONTEND_SIGNAL_HEALTH_ENABLED='):
+                  lines[idx] = 'FRONTEND_SIGNAL_HEALTH_ENABLED=false'
+                  updated = True
+                  break
+          if not updated:
+              lines.append('FRONTEND_SIGNAL_HEALTH_ENABLED=false')
+          env_path.write_text('\n'.join(lines) + '\n')
+          PY
+      - name: Restart stack with feature disabled
+        run: |
+          make up
+          sleep 20
+      - name: UI e2e (feature disabled)
+        env:
+          FRONTEND_SIGNAL_HEALTH_ENABLED: "false"
+        run: pytest -q tests/frontend/e2e
+      - name: Final teardown
+        if: always()
+        run: make down

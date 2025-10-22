@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<section>
+  <h2>Статус ядер</h2>
+  <table>
+    <tr><th>Имя</th><th>Включено</th><th>Вес</th></tr>
+    {% for name, info in cores.items() %}
+    <tr><td>{{ name }}</td><td>{{ info.get('enabled') }}</td><td>{{ info.get('weight') }}</td></tr>
+    {% endfor %}
+  </table>
+</section>
+{% endblock %}

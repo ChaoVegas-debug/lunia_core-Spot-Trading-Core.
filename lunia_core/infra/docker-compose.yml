@@ -1,0 +1,163 @@
+services:
+  api:
+    build: ..
+    ports:
+      - "8000:8000"
+    env_file:
+      - "../.env"
+    environment:
+      PYTHONPATH: /opt/app
+      FLASK_APP: app.services.api.flask_app
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      ENABLE_REDIS: ${ENABLE_REDIS:-true}
+    volumes:
+      - ../logs:/opt/app/lunia_core/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  scheduler:
+    build: ..
+    command: python -m app.services.scheduler.worker
+    env_file:
+      - "../.env"
+    environment:
+      PYTHONPATH: /opt/app
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      ENABLE_REDIS: ${ENABLE_REDIS:-true}
+    volumes:
+      - ../logs:/opt/app/lunia_core/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.services.scheduler.worker", "--healthcheck"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  arbitrage:
+    build: ..
+    command: python -m app.services.arbitrage.worker
+    env_file:
+      - "../.env"
+    environment:
+      PYTHONPATH: /opt/app
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      ENABLE_REDIS: ${ENABLE_REDIS:-true}
+    volumes:
+      - ../logs:/opt/app/lunia_core/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.services.arbitrage.worker", "--healthcheck"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  bot:
+    build: ..
+    command: python -m app.services.telegram.bot
+    env_file:
+      - "../.env"
+    environment:
+      PYTHONPATH: /opt/app
+    profiles: [bot]
+    volumes:
+      - ../logs:/opt/app/lunia_core/logs
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.services.telegram.bot", "--healthcheck"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    profiles: [monitoring]
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    profiles: [monitoring]
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3100:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  frontend:
+    build: ../frontend
+    env_file:
+      - "../.env"
+    environment:
+      VITE_FEATURE_MANUAL_MODE: ${FEATURE_MANUAL_MODE:-1}
+      VITE_FEATURE_EXPLAIN_CARDS_V2: ${FEATURE_EXPLAIN_CARDS_V2:-1}
+      VITE_FEATURE_FUNDS_LIMITS: ${FEATURE_FUNDS_LIMITS:-1}
+      VITE_FEATURE_SANDBOX: ${FEATURE_SANDBOX:-1}
+      VITE_FEATURE_SCHEDULER: ${FEATURE_SCHEDULER:-1}
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    profiles: [tls]
+    env_file:
+      - "../.env"
+    environment:
+      LUNIA_DOMAIN: ${LUNIA_DOMAIN:-example.com}
+      LUNIA_TLS_EMAIL: ${LUNIA_TLS_EMAIL:-admin@example.com}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  redis-data:

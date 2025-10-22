@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Lunia Core Release Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 1.5rem; }
+    th, td { border: 1px solid #ddd; padding: 0.5rem; }
+    th { background-color: #f0f0f0; text-align: left; }
+    .status-pending { color: #c97b00; font-weight: bold; }
+    .status-pass { color: #2f855a; font-weight: bold; }
+    .status-fail { color: #c53030; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Lunia Core Release Report</h1>
+  <p><em>Populate this report after running <code>scripts/verify_all.sh</code>. Artifacts live under <code>artifacts/verify_&lt;timestamp&gt;/</code>.</em></p>
+
+  <h2>Environment Summary</h2>
+  <table>
+    <tr><th>Item</th><th>Value</th></tr>
+    <tr><td>Verification Timestamp</td><td>TBD</td></tr>
+    <tr><td>Git Commit</td><td>TBD</td></tr>
+    <tr><td>Python / Pip</td><td>TBD</td></tr>
+    <tr><td>Docker / Compose</td><td>TBD</td></tr>
+    <tr><td>Target Environment</td><td>staging / production</td></tr>
+  </table>
+
+  <h2>Lint &amp; Static Analysis</h2>
+  <table>
+    <tr><th>Check</th><th>Status</th><th>Notes</th></tr>
+    <tr><td>ruff</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>black --check</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>flake8</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>mypy</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>yamllint</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>bandit</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>trivy (repo)</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>trivy (Dockerfile)</td><td class="status-pending">PENDING</td><td></td></tr>
+  </table>
+
+  <h2>Test Matrix</h2>
+  <table>
+    <tr><th>Suite</th><th>Status</th><th>Coverage</th></tr>
+    <tr><td>tests/auth</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>tests/portfolio</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>tests/risk</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>tests/ai/research</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>tests/ai/orchestrator</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>tests/strategies</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>tests/infra</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>tests/perf</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>tests/frontend/e2e</td><td class="status-pending">SKIPPED</td><td>Document reason</td></tr>
+  </table>
+
+  <h2>Smoke Endpoints</h2>
+  <table>
+    <tr><th>Endpoint</th><th>Method</th><th>Status</th><th>Notes</th></tr>
+    <tr><td>/healthz</td><td>GET</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>/metrics</td><td>GET</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>/api/portfolio/build</td><td>POST</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>/api/portfolio/explain/BTCUSDT</td><td>GET</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>/api/orchestrator/consensus</td><td>GET</td><td class="status-pending">PENDING</td><td></td></tr>
+    <tr><td>/ui/signal-health</td><td>GET</td><td class="status-pending">PENDING</td><td></td></tr>
+  </table>
+
+  <h2>Feature Flags</h2>
+  <table>
+    <tr><th>Flag</th><th>Value</th></tr>
+    <tr><td>FRONTEND_SIGNAL_HEALTH_ENABLED</td><td>TBD</td></tr>
+    <tr><td>INFRA_PROD_ENABLED</td><td>TBD</td></tr>
+    <tr><td>BINANCE_LIVE_TRADING</td><td>TBD</td></tr>
+    <tr><td>BINANCE_FORCE_MOCK</td><td>TBD</td></tr>
+    <tr><td>SELF_HEALING_ENABLED</td><td>TBD</td></tr>
+    <tr><td>AUTO_BACKUP_ENABLED</td><td>TBD</td></tr>
+  </table>
+
+  <h2>Artifacts</h2>
+  <ul>
+    <li>Coverage XML/HTML: <code>artifacts/verify_&lt;timestamp&gt;/coverage*</code></li>
+    <li>Pytest JUnit: <code>artifacts/verify_&lt;timestamp&gt;/pytest-junit.xml</code></li>
+    <li>Docker logs: <code>artifacts/verify_&lt;timestamp&gt;/docker-logs.txt</code></li>
+    <li>Smoke responses: <code>artifacts/verify_&lt;timestamp&gt;/api-*.json</code></li>
+    <li>Environment snapshot: <code>artifacts/verify_&lt;timestamp&gt;/environment.txt</code></li>
+  </ul>
+
+  <h2>Observations</h2>
+  <p><strong>Summary:</strong> TBD</p>
+  <p><strong>Risks:</strong> TBD</p>
+  <p><strong>Follow-up Actions:</strong> TBD</p>
+
+  <h2>Approval</h2>
+  <table>
+    <tr><th>Role</th><th>Name</th><th>Sign-off</th></tr>
+    <tr><td>Release Manager</td><td></td><td></td></tr>
+    <tr><td>Security Lead</td><td></td><td></td></tr>
+    <tr><td>Product Owner</td><td></td><td></td></tr>
+  </table>
+</body>
+</html>

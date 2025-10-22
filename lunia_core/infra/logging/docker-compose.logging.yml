@@ -1,0 +1,52 @@
+version: "3.9"
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.2
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-changeme}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    networks:
+      - logging
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.2
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD:-changeme}
+    depends_on:
+      - elasticsearch
+    networks:
+      - logging
+    ports:
+      - "5601:5601"
+
+  vector:
+    image: timberio/vector:0.32.X-alpine
+    user: "0"
+    volumes:
+      - ../logging/vector.toml:/etc/vector/vector.toml:ro
+      - ../../logs:/opt/lunia_core/logs:ro
+    environment:
+      - LOG_ARCHIVE_BUCKET=${LOG_ARCHIVE_BUCKET:-lunia-audit-archive}
+      - AWS_REGION=${AWS_REGION:-eu-central-1}
+      - INFRA_PROD_ENABLED=${INFRA_PROD_ENABLED:-false}
+    depends_on:
+      - elasticsearch
+    networks:
+      - logging
+
+networks:
+  logging:
+    name: lunia_logging
+
+volumes:
+  es-data:

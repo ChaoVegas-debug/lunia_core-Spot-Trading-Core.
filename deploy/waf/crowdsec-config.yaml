@@ -1,0 +1,15 @@
+common:
+  daemonize: false
+  log_media: stdout
+  log_level: info
+config_paths:
+  acquis: /etc/crowdsec/acquis.yaml
+cscli:
+  output: human
+api:
+  server:
+    listen_uri: 0.0.0.0:8080
+    profiles_path: /etc/crowdsec/profiles.yaml
+    log_level: info
+  client:
+    insecure_skip_verify: false

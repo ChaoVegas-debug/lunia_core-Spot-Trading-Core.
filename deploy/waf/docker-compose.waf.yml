@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  waf:
+    image: owasp/modsecurity-crs:nginx
+    container_name: lunia_waf
+    restart: unless-stopped
+    environment:
+      - PROXY_PASS=http://api:8080
+      - INFRA_PROD_ENABLED=${INFRA_PROD_ENABLED:-false}
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./modsecurity.conf:/etc/modsecurity/modsecurity.conf:ro
+      - ./crs-setup.conf:/etc/modsecurity.d/owasp-crs/crs-setup.conf:ro
+      - ./rules.d:/etc/modsecurity.d/rules.d:ro
+    depends_on:
+      - crowdsec
+    networks:
+      - perimeter
+
+  crowdsec:
+    image: crowdsecurity/crowdsec:latest
+    container_name: lunia_crowdsec
+    restart: unless-stopped
+    volumes:
+      - ./crowdsec-config.yaml:/etc/crowdsec/config.yaml:ro
+      - ./crowdsec-acquis.yaml:/etc/crowdsec/acquis.yaml:ro
+      - crowdsec-data:/var/lib/crowdsec/data
+    environment:
+      - COLLECTIONS=crowdsecurity/base-http, crowdsecurity/http-cve
+
+  fail2ban:
+    image: crazymax/fail2ban:latest
+    container_name: lunia_fail2ban
+    restart: unless-stopped
+    volumes:
+      - ./fail2ban.local:/data/jail.local:ro
+      - fail2ban-data:/data/db
+    depends_on:
+      - crowdsec
+
+networks:
+  perimeter:
+    name: lunia_perimeter
+
+volumes:
+  crowdsec-data:
+  fail2ban-data:

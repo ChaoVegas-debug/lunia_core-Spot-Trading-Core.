@@ -1,0 +1,57 @@
+stages:
+  - build
+  - sbom
+  - sign
+  - test
+
+variables:
+  IMAGE_NAME: "$CI_REGISTRY_IMAGE/lunia-core"
+  IMAGE_TAG: "$CI_COMMIT_SHA"
+  DOCKER_DRIVER: overlay2
+
+build-image:
+  stage: build
+  image: docker:24.0
+  services:
+    - docker:24.0-dind
+  script:
+    - docker build -f deploy/Dockerfile -t ${IMAGE_NAME}:${IMAGE_TAG} . | tee build.log
+    - docker save ${IMAGE_NAME}:${IMAGE_TAG} -o lunia-core.tar
+  artifacts:
+    when: always
+    paths:
+      - build.log
+      - lunia-core.tar
+    reports:
+      dotenv: build.env
+
+sbom:
+  stage: sbom
+  image: anchore/syft:latest
+  needs: [build-image]
+  script:
+    - syft packages dir:. --output spdx-json > sbom.spdx.json
+  artifacts:
+    when: always
+    paths:
+      - sbom.spdx.json
+
+cosign-sign:
+  stage: sign
+  image: ghcr.io/sigstore/cosign/cosign:v2.1.1
+  needs: [build-image, sbom]
+  variables:
+    COSIGN_EXPERIMENTAL: "1"
+  script:
+    - cosign sign --key env://COSIGN_PRIVATE_KEY ${IMAGE_NAME}:${IMAGE_TAG}
+  rules:
+    - if: "$COSIGN_PRIVATE_KEY"
+
+security-tests:
+  stage: test
+  image: python:3.11-slim
+  needs: [build-image]
+  before_script:
+    - pip install --no-cache-dir -r requirements/dev.txt
+  script:
+    - pytest tests/infra -q

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>Lunia Dashboard</title>
+  <link rel="stylesheet" href="/static/css/dashboard.css" />
+</head>
+<body>
+  <header>
+    <h1>Lunia Dashboard</h1>
+    <nav>
+      <a href="/">Обзор</a>
+      <a href="/cores">Ядра</a>
+      <a href="/backtest">Бэктесты</a>
+      {% if signal_health_enabled %}
+      <a href="/signal-health">Здоровье сигналов</a>
+      {% endif %}
+    </nav>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

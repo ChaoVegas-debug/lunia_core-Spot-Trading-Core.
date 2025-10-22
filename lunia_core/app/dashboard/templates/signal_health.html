@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+  <section class="signal-health">
+    <h2>Здоровье сигналов</h2>
+    {% if summary.enabled %}
+    <div class="metrics">
+      <div class="metric">
+        <strong>Точность:</strong>
+        <span>{{ (summary.accuracy * 100) | round(2) }}%</span>
+        <small>на основе {{ summary.sample_size }} сигналов</small>
+      </div>
+      <div class="metric">
+        <strong>Уверенность LLM:</strong>
+        <span>{{ (summary.llm_confidence * 100) | round(2) }}%</span>
+      </div>
+    </div>
+    <h3>Топ фичи</h3>
+    <ul class="feature-list">
+      {% for feature in summary.top_features %}
+      <li>
+        <strong>{{ feature.name }}</strong>
+        <p>{{ feature.description }}</p>
+        <p><em>Важность: {{ feature.importance | round(2) }}</em></p>
+        {% if feature.metrics %}
+        <p>Метрики: {{ feature.metrics | join(", ") }}</p>
+        {% endif %}
+        {% if feature.tags %}
+        <p>Теги: {{ feature.tags | join(", ") }}</p>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    <h3>Grafana панели</h3>
+    <ul class="grafana-links">
+      {% for panel in summary.grafana_panels %}
+      <li><a href="{{ panel.url }}" target="_blank" rel="noopener">{{ panel.title }}</a></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>Раздел отключён администратором.</p>
+    {% endif %}
+  </section>
+{% endblock %}

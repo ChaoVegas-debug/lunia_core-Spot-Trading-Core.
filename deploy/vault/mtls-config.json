@@ -1,0 +1,8 @@
+{
+  "mutual_tls": true,
+  "ca_bundle_path": "/vault/tls/ca.crt",
+  "client_cert_path": "/vault/tls/client.crt",
+  "client_key_path": "/vault/tls/client.key",
+  "allowed_roles": ["api", "scheduler", "worker"],
+  "enforce_host_verification": true
+}

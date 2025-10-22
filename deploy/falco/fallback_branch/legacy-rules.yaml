@@ -1,0 +1,5 @@
+- rule: Legacy Shell Detection
+  desc: Original lightweight rule set retained for emergency rollback.
+  condition: spawned_process and proc.name in ("bash", "sh")
+  output: "Legacy rule triggered (proc=%proc.name cmd=%proc.cmdline)"
+  priority: NOTICE

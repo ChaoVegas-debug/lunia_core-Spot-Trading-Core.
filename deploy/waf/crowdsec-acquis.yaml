@@ -1,0 +1,5 @@
+filenames:
+  - /var/log/modsecurity/audit.log
+labels:
+  type: waf
+  system: lunia-core
