@@ -1,8 +1,1 @@
-flask
-aiogram
-pydantic
-python-dotenv
-requests
-pytest
-redis
-prometheus-client
+-r base_minimal.txt
