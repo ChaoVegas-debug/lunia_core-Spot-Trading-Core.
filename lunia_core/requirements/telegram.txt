@@ -1,4 +1,3 @@
 # Optional Telegram stack (NOT installed by default)
 aiogram==2.25.2
 aiohttp==3.8.6
-

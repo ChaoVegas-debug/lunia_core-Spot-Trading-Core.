@@ -3,7 +3,7 @@ import importlib
 import sys
 from pathlib import Path
 
-# Ensure repository root is on sys.path so lunia_core package can be imported locally
+# Make package importable from repo root without install
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -11,8 +11,8 @@ if str(ROOT) not in sys.path:
 def _load_telegram():
     """
     Universal Telegram loader:
-    1. Tries to import lunia_core.app.services.telegram via importlib.
-    2. Falls back to direct import if already installed.
+    1) Try import via importlib (package style).
+    2) Fallback to direct module import if already on path.
     """
     try:
         return importlib.import_module("lunia_core.app.services.telegram")
@@ -20,9 +20,7 @@ def _load_telegram():
         from lunia_core.app.services import telegram as tg  # type: ignore
         return tg
 
-
 telegram = _load_telegram()
-
 
 def test_telegram_optional_surface() -> None:
     """Ensure telegram service facade works without aiogram."""

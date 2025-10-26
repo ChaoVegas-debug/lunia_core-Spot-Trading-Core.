@@ -4,4 +4,3 @@ python-dotenv>=1.0.0
 requests>=2.31.0
 redis>=5
 prometheus-client>=0.17.0
-
