@@ -1,1 +1,1 @@
--r lunia_core/requirements/base_minimal.txt
+-r lunia_core/requirements/base.txt

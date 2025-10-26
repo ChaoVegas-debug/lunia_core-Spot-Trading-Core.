@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-echo "[guard] verifying minimal requirements have NO aiogram/aiohttp..."
-if grep -Eiq '(aiogram|aiohttp)' requirements.txt lunia_core/requirements/base_minimal.txt; then
-  echo "❌ guard: aiogram/aiohttp detected in minimal requirements"
+FILE="lunia_core/requirements/base_minimal.txt"
+if [ ! -f "$FILE" ]; then
+  echo "❌ Missing $FILE"
   exit 1
 fi
-echo "✅ guard: ok"
+if grep -Eiq '(aiogram|aiohttp|aio+gram|ai+ogram)' "$FILE"; then
+  echo "❌ Telegram deps found in $FILE"
+  exit 1
+fi
+echo "✅ Guard OK — no Telegram deps in minimal profile."

@@ -1,6 +1,0 @@
-Pydantic v2 detected. Replace @root_validator with:
-  - @model_validator(mode="before") or
-  - @model_validator(mode="after")
-Use @field_validator for field-level checks.
-Search:
-  grep -RIn "@root_validator" lunia_core/app

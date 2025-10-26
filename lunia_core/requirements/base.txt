@@ -1,1 +1,4 @@
+# LUNIA/ALADDIN Phase 2A split — minimal core deps
 -r base_minimal.txt
+# Optional Telegram support (enable later):
+# -r telegram.txt

@@ -1,9 +1,7 @@
-apscheduler
 flask
-pika
 pydantic
 python-dotenv
-pytest
-redis
 requests
-sqlalchemy
+redis
+prometheus-client
+pytest

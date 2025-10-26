@@ -1,33 +1,10 @@
 version: "3.9"
-
 services:
   redis:
     image: redis:7
+    restart: unless-stopped
     ports: ["6379:6379"]
-    restart: always
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
   rabbitmq:
     image: rabbitmq:3-management
+    restart: unless-stopped
     ports: ["5672:5672", "15672:15672"]
-    restart: always
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  app:
-    build: ..
-    env_file:
-      - ../.env.example.3a
-    depends_on:
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    command: ["python", "-m", "app.main"]

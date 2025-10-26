@@ -1,10 +1,7 @@
-import importlib
-import os
-
-import pytest
+from lunia_core.app.services import telegram
 
 
-@pytest.mark.skipif(os.getenv("OFFLINE_CI") == "1", reason="offline mode")
-def test_telegram_optional_imports() -> None:
-    module = importlib.import_module("app.services.telegram")
-    assert hasattr(module, "is_available")
+def test_telegram_optional_surface() -> None:
+    assert hasattr(telegram, "is_available")
+    assert isinstance(telegram.is_available(), bool)
+    _ = telegram.reason_unavailable()
