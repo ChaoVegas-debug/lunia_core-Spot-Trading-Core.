@@ -11,15 +11,16 @@ class TradeRequest(BaseModel):
     side: str = Field(..., description="Order side BUY or SELL")
     qty: float = Field(..., gt=0, description="Quantity to trade")
 
-    @root_validator
-    def validate_fields(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        side = values.get("side", "").upper()
-        if side not in {"BUY", "SELL"}:
-            raise ValueError("side must be BUY or SELL")
-        values["side"] = side
-        values["symbol"] = values.get("symbol", "").upper()
-        if "type" in values and isinstance(values["type"], str):
-            values["type"] = values["type"].upper()
+    @root_validator(pre=True)
+    def validate_fields(cls, values: Any) -> Any:
+        if isinstance(values, dict):
+            side = values.get("side", "").upper()
+            if side not in {"BUY", "SELL"}:
+                raise ValueError("side must be BUY or SELL")
+            values["side"] = side
+            values["symbol"] = values.get("symbol", "").upper()
+            if "type" in values and isinstance(values["type"], str):
+                values["type"] = values["type"].upper()
         return values
 
 
@@ -28,12 +29,13 @@ class SignalPayload(BaseModel):
     side: str = Field(...)
     qty: float = Field(..., gt=0)
 
-    @root_validator
-    def normalize(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        values["side"] = values.get("side", "").upper()
-        values["symbol"] = values.get("symbol", "").upper()
-        if values["side"] not in {"BUY", "SELL"}:
-            raise ValueError("side must be BUY or SELL")
+    @root_validator(pre=True)
+    def normalize(cls, values: Any) -> Any:
+        if isinstance(values, dict):
+            values["side"] = values.get("side", "").upper()
+            values["symbol"] = values.get("symbol", "").upper()
+            if values["side"] not in {"BUY", "SELL"}:
+                raise ValueError("side must be BUY or SELL")
         return values
 
 
