@@ -1,0 +1,4 @@
+# Convenience profile that includes everything
+-r base_minimal.txt
+-r telegram.txt
+
