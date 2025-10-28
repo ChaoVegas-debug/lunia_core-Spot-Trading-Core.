@@ -1,8 +1,8 @@
-import os
-import subprocess
+import os, subprocess, sys, pathlib
+py = os.environ.get("PYTHON", sys.executable or "python3")
 
-
-def test_health_scripts_smoke() -> None:
-    python_executable = os.environ.get("PYTHON", "python3")
-    subprocess.call([python_executable, "scripts/health/redis_check.py"])
-    subprocess.call([python_executable, "scripts/health/rabbitmq_check.py"])
+def test_health_scripts_smoke():
+    env = dict(os.environ)
+    env["OFFLINE_CI"] = "1"
+    subprocess.call([py, "scripts/health/redis_check.py"], env=env)
+    subprocess.call([py, "scripts/health/rabbitmq_check.py"], env=env)

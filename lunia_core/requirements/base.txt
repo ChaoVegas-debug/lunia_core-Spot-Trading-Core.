@@ -1,5 +1,3 @@
-# Базовый профиль = минимальный. Никаких Telegram-зависимостей здесь быть не должно.
 -r base_minimal.txt
-
-# Telegram — только в опциональном профиле (подключается в более поздних фазах):
+# Optional Telegram support is out of the base profile by design:
 # -r telegram.txt

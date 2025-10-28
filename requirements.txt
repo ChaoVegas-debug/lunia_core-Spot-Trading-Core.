@@ -1,2 +1,1 @@
-# Корневой requirements указывает на базовый профиль (который, в свою очередь, тянет только minimal)
 -r lunia_core/requirements/base.txt

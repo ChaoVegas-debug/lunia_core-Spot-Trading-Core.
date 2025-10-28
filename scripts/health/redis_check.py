@@ -1,27 +1,23 @@
 #!/usr/bin/env python3
-import os
-import sys
-
-def main() -> None:
-    if os.getenv("OFFLINE_CI") == "1" or os.getenv("SKIP_INFRA") == "1":
-        print("redis: SKIP (offline mode)")
+import os, sys
+OFFLINE = os.environ.get("OFFLINE_CI") == "1"
+try:
+    import redis  # type: ignore
+except Exception as e:
+    if OFFLINE:
+        print(f"⏭️  Redis check skipped (OFFLINE_CI=1, import error: {e})")
         sys.exit(0)
-    try:
-        import redis  # type: ignore  # lazy import
-    except Exception:
-        print("redis: SKIP (redis package not installed)")
+    print(f"⚠️  Redis import failed: {e}")
+    sys.exit(1)
+
+try:
+    r = redis.Redis(host=os.environ.get("REDIS_HOST","localhost"), port=6379, socket_connect_timeout=1)
+    r.ping()
+    print("✅ Redis alive")
+    sys.exit(0)
+except Exception as e:
+    if OFFLINE:
+        print(f"⏭️  Redis ping skipped (OFFLINE_CI=1, {e})")
         sys.exit(0)
-
-    url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-    try:
-        client = redis.Redis.from_url(url)
-        client.ping()
-        print("redis: OK")
-        sys.exit(0)
-    except Exception as exc:  # pragma: no cover - runtime failure path
-        print(f"redis: FAIL — {exc}")
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
+    print(f"⚠️  Redis unreachable: {e}")
+    sys.exit(1)

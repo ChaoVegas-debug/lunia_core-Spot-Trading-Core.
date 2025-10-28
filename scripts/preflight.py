@@ -2,7 +2,7 @@
 import sys, re, pathlib
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 minimal = ROOT / "lunia_core/requirements/base_minimal.txt"
-patterns = [r"\\baiogram\\b", r"\\baiohttp\\b", r"ai\+?ogram", r"aio\+?gram"]
+patterns = [r"aiogram", r"aiohttp", r"aio+gram", r"ai+ogram"]
 
 if not minimal.exists():
     print("❌ Missing:", minimal)
@@ -15,7 +15,7 @@ for i, line in enumerate(minimal.read_text().splitlines(), start=1):
             bad.append((i, line.strip()))
 
 if bad:
-    print("❌ Forbidden deps in base_minimal.txt:")
+    print("❌ Forbidden deps/typos in base_minimal.txt:")
     for ln, text in bad:
         print(f"   line {ln}: {text}")
     sys.exit(1)
