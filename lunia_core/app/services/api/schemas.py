@@ -13,14 +13,24 @@ class TradeRequest(BaseModel):
 
     @root_validator(pre=True)
     def validate_fields(cls, values: Any) -> Any:
-        if isinstance(values, dict):
-            side = values.get("side", "").upper()
-            if side not in {"BUY", "SELL"}:
-                raise ValueError("side must be BUY or SELL")
-            values["side"] = side
-            values["symbol"] = values.get("symbol", "").upper()
-            if "type" in values and isinstance(values["type"], str):
-                values["type"] = values["type"].upper()
+        if not isinstance(values, dict):
+            return values
+
+        side = values.get("side", "").upper()
+        if side not in {"BUY", "SELL"}:
+            raise ValueError("side must be BUY or SELL")
+        values["side"] = side
+
+        if "symbol" in values:
+            if not values["symbol"]:
+                raise ValueError("symbol field required")
+            values["symbol"] = str(values["symbol"]).upper()
+        else:
+            raise ValueError("symbol field required")
+
+        if "type" in values and isinstance(values["type"], str):
+            values["type"] = values["type"].upper()
+
         return values
 
 
@@ -31,11 +41,21 @@ class SignalPayload(BaseModel):
 
     @root_validator(pre=True)
     def normalize(cls, values: Any) -> Any:
-        if isinstance(values, dict):
-            values["side"] = values.get("side", "").upper()
-            values["symbol"] = values.get("symbol", "").upper()
+        if not isinstance(values, dict):
+            return values
+
+        if "side" in values:
+            values["side"] = str(values["side"]).upper()
             if values["side"] not in {"BUY", "SELL"}:
                 raise ValueError("side must be BUY or SELL")
+
+        if "symbol" in values:
+            if not values["symbol"]:
+                raise ValueError("symbol field required")
+            values["symbol"] = str(values["symbol"]).upper()
+        else:
+            raise ValueError("symbol field required")
+
         return values
 
 
