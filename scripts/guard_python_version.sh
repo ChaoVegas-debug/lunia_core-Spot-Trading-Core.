@@ -1,10 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
-REQ="${1:-3.11}"
-PYTHON_BIN="${PYTHON:-python}"
-CUR=$("${PYTHON_BIN}" -c "import sys;print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-if [ "$CUR" != "$REQ" ]; then
-  echo "❌ Python $CUR detected — requires $REQ.x (aiogram 2.x / aiohttp 3.8.x compatible)"
+
+# If PYTHON env provided use it, else default to python3
+PYBIN="${PYTHON:-python3}"
+if ! command -v "$PYBIN" >/dev/null 2>&1; then
+  echo "❌ Interpreter not found: $PYBIN"
   exit 1
 fi
-echo "✅ Python $CUR OK"
+
+VERSION_STR="$($PYBIN -c 'import sys; print(".".join(map(str, sys.version_info[:3])))')"
+MAJOR="$($PYBIN -c 'import sys; print(sys.version_info[0])')"
+MINOR="$($PYBIN -c 'import sys; print(sys.version_info[1])')"
+
+echo "[guard] Using $PYBIN -> $VERSION_STR"
+if [ "$MAJOR" -ne 3 ] || [ "$MINOR" -ne 11 ]; then
+  echo "❌ Python 3.11 is required (detected $VERSION_STR)"
+  exit 1
+fi
+
+echo "✅ Python version guard passed"
