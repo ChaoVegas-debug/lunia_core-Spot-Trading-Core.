@@ -4,7 +4,8 @@ set -euo pipefail
 say(){ echo -e "$@"; }
 
 # argument parsing
-TARGET_OVERRIDE=""
+TARGET_NAME=""
+TARGET_REF=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --phase2a)
@@ -16,8 +17,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     --target)
       shift
-      TARGET_OVERRIDE="${1:-}"
-      if [[ -z "${TARGET_OVERRIDE}" ]]; then
+      TARGET_NAME="${1:-}"
+      if [[ -z "${TARGET_NAME}" ]]; then
         say "❌ --target requires a branch name"; exit 1
       fi
       ;;
@@ -90,12 +91,29 @@ fi
 BK="backup/${WORK_BRANCH//\//-}-$(date +%Y%m%d-%H%M%S)"
 git branch -f "$BK" HEAD || true
 
-TARGET_REF="origin/main"
-if [[ -n "$TARGET_OVERRIDE" ]]; then
-  TARGET_REF="$TARGET_OVERRIDE"
-elif ! git show-ref --verify --quiet "refs/remotes/origin/main"; then
-  if git show-ref --verify --quiet "refs/heads/main"; then
-    TARGET_REF="main"
+resolve_target_ref() {
+  local name="$1"
+  if git show-ref --verify --quiet "refs/remotes/origin/$name"; then
+    echo "origin/$name"
+    return 0
+  fi
+  if git show-ref --verify --quiet "refs/heads/$name"; then
+    echo "$name"
+    return 0
+  fi
+  return 1
+}
+
+if [[ -n "$TARGET_NAME" ]]; then
+  if TARGET_REF=$(resolve_target_ref "$TARGET_NAME"); then
+    :
+  else
+    say "ℹ️ target branch '$TARGET_NAME' not found; skipping merge"
+    TARGET_REF=""
+  fi
+else
+  if TARGET_REF=$(resolve_target_ref "main"); then
+    :
   else
     TARGET_REF=""
   fi
