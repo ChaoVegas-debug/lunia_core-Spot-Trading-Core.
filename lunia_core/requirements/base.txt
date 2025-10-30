@@ -1,3 +1,4 @@
+aiohttp==3.8.6
 -r base_minimal.txt
 # Optional Telegram support is out of the base profile by design:
 # -r telegram.txt
