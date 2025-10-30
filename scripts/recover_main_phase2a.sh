@@ -32,16 +32,18 @@ if [[ $missing -eq 1 ]]; then
 fi
 
 # === 2. Восстановление ветки main ===
+current_branch="$(git rev-parse --abbrev-ref HEAD || echo HEAD)"
+sync_target="$(git rev-parse HEAD)"
 git fetch --all || true
 if ! git show-ref --verify --quiet refs/heads/main; then
   say "ℹ️ main not found — creating from HEAD"
-  git branch -f main HEAD
+  git branch -f main "$sync_target"
 fi
 
 say "→ checkout main"
 git checkout -f main
 say "→ hard-sync main to current content"
-git reset --hard HEAD
+git reset --hard "$sync_target"
 git commit --allow-empty -m "sync(main): reattach verified Phase 2A baseline"
 
 # === 3. Локальные проверки (OFFLINE-safe) ===
