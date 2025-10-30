@@ -13,36 +13,71 @@ cd "$ROOT"
 
 git config --global --add safe.directory "$ROOT" || true
 
-git fetch --all --prune
+git fetch --all --prune 2>/dev/null || true
 
-# discover latest Phase 2A branch
-WORK_BRANCH="$(git for-each-ref --format='%(refname:short) %(committerdate:iso8601)' refs/remotes/origin/codex/add-infrastructure-and-health-integration-* \
-  | sort -k2,2r | head -n1 | awk '{print $1}' | sed 's#^origin/##')"
-if [[ -z "${WORK_BRANCH:-}" ]]; then
-  say "⛔ Phase-2A branch not found"; exit 2
+# discover latest Phase 2A branch (allow explicit override)
+if [[ -n "${PHASE2A_BRANCH:-}" ]]; then
+  WORK_BRANCH="$PHASE2A_BRANCH"
+else
+  WORK_BRANCH="$(git for-each-ref --format='%(refname:short) %(committerdate:iso8601)' \
+    refs/remotes/origin/codex/add-infrastructure-and-health-integration-* 2>/dev/null \
+    | sort -k2,2r | head -n1 | awk '{print $1}' | sed 's#^origin/##')"
+  if [[ -z "${WORK_BRANCH:-}" ]]; then
+    WORK_BRANCH="$(git for-each-ref --format='%(refname:short) %(committerdate:iso8601)' \
+      refs/heads/codex/add-infrastructure-and-health-integration-* 2>/dev/null \
+      | sort -k2,2r | head -n1 | awk '{print $1}')"
+  fi
 fi
-say "→ Using green branch: $WORK_BRANCH"
+
+FALLBACK_CURRENT=0
+if [[ -z "${WORK_BRANCH:-}" ]]; then
+  WORK_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+  FALLBACK_CURRENT=1
+  say "⚠️ Phase-2A branch not located; falling back to current branch '$WORK_BRANCH'"
+else
+  say "→ Using green branch: $WORK_BRANCH"
+fi
 
 # checkout local tracking branch
 if ! git show-ref --verify --quiet "refs/heads/$WORK_BRANCH"; then
-  git switch -c "$WORK_BRANCH" --track "origin/$WORK_BRANCH"
+  if git show-ref --verify --quiet "refs/remotes/origin/$WORK_BRANCH"; then
+    git switch -c "$WORK_BRANCH" --track "origin/$WORK_BRANCH"
+  else
+    git switch -c "$WORK_BRANCH"
+  fi
 else
   git switch "$WORK_BRANCH"
-  git pull --rebase origin "$WORK_BRANCH"
+  if git show-ref --verify --quiet "refs/remotes/origin/$WORK_BRANCH"; then
+    git pull --rebase origin "$WORK_BRANCH"
+  fi
 fi
 
 # backup branch
 BK="backup/${WORK_BRANCH//\//-}-$(date +%Y%m%d-%H%M%S)"
 git branch -f "$BK" HEAD || true
 
-say "→ Merge origin/main into $WORK_BRANCH with -X ours"
-set +e
-git merge -m "merge(origin/main → $WORK_BRANCH): keep Phase-2A baseline as source of truth" -X ours origin/main
-merge_rc=$?
-set -e
+TARGET_REF="origin/main"
+if ! git show-ref --verify --quiet "refs/remotes/origin/main"; then
+  if git show-ref --verify --quiet "refs/heads/main"; then
+    TARGET_REF="main"
+  else
+    TARGET_REF=""
+  fi
+fi
+
+if [[ -n "$TARGET_REF" ]]; then
+  say "→ Merge $TARGET_REF into $WORK_BRANCH with -X ours"
+  set +e
+  git merge -m "merge($TARGET_REF → $WORK_BRANCH): keep Phase-2A baseline as source of truth" -X ours "$TARGET_REF"
+  merge_rc=$?
+  set -e
+else
+  say "ℹ️ main reference not found; skipping merge step"
+  merge_rc=0
+fi
 
 # known files to resolve with ours
-read -r -d '' OURS_LAT <<'FILES'
+read -r -d '' OURS_LAT <<'FILES' || true
 .env.example.3a
 .github/workflows/verify.yml
 infra/docker-compose.yml
@@ -108,19 +143,26 @@ say "→ guard(no-telegram)"; bash   scripts/ensure-no-telegram.sh    || true
 say "→ health OFFLINE_CI=1"; OFFLINE_CI=1 python scripts/health/all_checks.py || true
 say "→ pytest smoke";       pytest -q -k "telegram_optional or health_scripts or runtime_guard or api_schemas" || true
 
-say "→ push $WORK_BRANCH"
-set +e
-git push origin "$WORK_BRANCH"
-code=$?
-set -e
+if git remote | grep -qx "origin"; then
+  say "→ push $WORK_BRANCH"
+  set +e
+  git push origin "$WORK_BRANCH"
+  code=$?
+  set -e
 
-if [[ $code -eq 0 ]]; then
-  say "🎉 PR обновлён."
-  exit 0
+  if [[ $code -eq 0 ]]; then
+    say "🎉 PR обновлён."
+    exit 0
+  fi
+
+  BUNDLE="phase2a_${WORK_BRANCH//\//-}.bundle"
+  say "⚠️ Push blocked (code=$code). Creating bundle: $BUNDLE"
+  git bundle create "$BUNDLE" "$WORK_BRANCH"
+  say "📦 Bundle ready: $BUNDLE"
+  say "To push manually:\n  git clone <REPO_URL> repo\n  cd repo && git pull ../$BUNDLE $WORK_BRANCH && git push origin $WORK_BRANCH\n"
+else
+  say "ℹ️ Remote 'origin' not configured. Skipping push step."
+  if [[ $FALLBACK_CURRENT -eq 1 ]]; then
+    say "ℹ️ Resolve conflicts manually or configure PHASE2A_BRANCH to point at your Phase-2A branch."
+  fi
 fi
-
-BUNDLE="phase2a_${WORK_BRANCH//\//-}.bundle"
-say "⚠️ Push blocked (code=$code). Creating bundle: $BUNDLE"
-git bundle create "$BUNDLE" "$WORK_BRANCH"
-say "📦 Bundle ready: $BUNDLE"
-say "To push manually:\n  git clone <REPO_URL> repo\n  cd repo && git pull ../$BUNDLE $WORK_BRANCH && git push origin $WORK_BRANCH\n"
