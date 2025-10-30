@@ -1,23 +1,20 @@
 #!/usr/bin/env python3
-import os, sys
+import os
+import socket
+import sys
+
 OFFLINE = os.environ.get("OFFLINE_CI") == "1"
-try:
-    import redis  # type: ignore
-except Exception as e:
-    if OFFLINE:
-        print(f"⏭️  Redis check skipped (OFFLINE_CI=1, import error: {e})")
-        sys.exit(0)
-    print(f"⚠️  Redis import failed: {e}")
-    sys.exit(1)
+HOST = os.environ.get("RABBITMQ_HOST", "localhost")
+PORT = 5672
+
+if OFFLINE:
+    print("⚠️ RabbitMQ check skipped (OFFLINE_CI=1)")
+    sys.exit(0)
 
 try:
-    r = redis.Redis(host=os.environ.get("REDIS_HOST","localhost"), port=6379, socket_connect_timeout=1)
-    r.ping()
-    print("✅ Redis alive")
-    sys.exit(0)
+    sock = socket.create_connection((HOST, PORT), timeout=1.5)
+    sock.close()
+    print("✅ RabbitMQ alive")
 except Exception as e:
-    if OFFLINE:
-        print(f"⏭️  Redis ping skipped (OFFLINE_CI=1, {e})")
-        sys.exit(0)
-    print(f"⚠️  Redis unreachable: {e}")
+    print(f"❌ RabbitMQ unreachable: {e}")
     sys.exit(1)

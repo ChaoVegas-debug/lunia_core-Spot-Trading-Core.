@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
+from pydantic import BaseModel, Field, validator, root_validator
 
-from pydantic import BaseModel, Field, root_validator
 
+# -------- Basic trading requests / responses --------
 
 class TradeRequest(BaseModel):
     symbol: str = Field(..., description="Trading pair symbol, e.g. BTCUSDT")
@@ -16,7 +17,7 @@ class TradeRequest(BaseModel):
         if not isinstance(values, dict):
             return values
 
-        side = values.get("side", "").upper()
+        side = str(values.get("side", "")).upper()
         if side not in {"BUY", "SELL"}:
             raise ValueError("side must be BUY or SELL")
         values["side"] = side
@@ -30,9 +31,32 @@ class TradeRequest(BaseModel):
 
         if "type" in values and isinstance(values["type"], str):
             values["type"] = values["type"].upper()
-
         return values
 
+
+class TradeResponse(BaseModel):
+    status: str
+    txid: Optional[str] = None
+
+    @validator("status")
+    def non_empty_status(cls, v: str) -> str:
+        if not v:
+            raise ValueError("status must be non-empty")
+        return v
+
+
+class PingResponse(BaseModel):
+    status: str
+    version: Optional[str] = None
+
+    @validator("status")
+    def non_empty(cls, v: str) -> str:
+        if not v:
+            raise ValueError("status must be non-empty")
+        return v
+
+
+# -------- Signals --------
 
 class SignalPayload(BaseModel):
     symbol: str = Field(...)
@@ -64,10 +88,14 @@ class SignalsEnvelope(BaseModel):
     enable: Dict[str, int] = Field(default_factory=lambda: {"SPOT": 1})
 
 
+# -------- Futures --------
+
 class FuturesTradeRequest(TradeRequest):
     leverage: float = Field(1.0, gt=0, description="Leverage multiplier")
     type: str = Field("MARKET", description="Order type for futures")
 
+
+# -------- Portfolio / Balances --------
 
 class PortfolioPosition(BaseModel):
     symbol: str
@@ -92,6 +120,8 @@ class BalanceEntry(BaseModel):
 class BalancesResponse(BaseModel):
     balances: List[BalanceEntry]
 
+
+# -------- Ops State --------
 
 class OpsState(BaseModel):
     auto_mode: bool
@@ -131,6 +161,8 @@ class OpsStateUpdate(BaseModel):
         extra = "allow"
 
 
+# -------- Controls / Config --------
+
 class CapitalRequest(BaseModel):
     cap_pct: float = Field(..., ge=0.0, le=1.0)
 
@@ -153,6 +185,8 @@ class SpotRiskUpdate(BaseModel):
     tp_pct_default: Optional[float]
     sl_pct_default: Optional[float]
 
+
+# -------- Research / Arbitrage --------
 
 class ResearchRequest(BaseModel):
     pairs: Optional[List[str]] = None

@@ -1,8 +1,18 @@
-import os, subprocess, sys, pathlib
-py = os.environ.get("PYTHON", sys.executable or "python3")
+import os
+import subprocess
+import sys
 
-def test_health_scripts_smoke():
-    env = dict(os.environ)
+# Разрешаем переопределить интерпретатор через $PYTHON, иначе берём текущий
+PYTHON = os.environ.get("PYTHON", sys.executable or "python3")
+
+
+def test_health_scripts_smoke_offline():
+    """
+    OFFLINE-дружелюбный смок-тест: запускаем health-скрипты с OFFLINE_CI=1,
+    чтобы проверки Redis/RabbitMQ проходили без поднятой инфраструктуры.
+    """
+    env = os.environ.copy()
     env["OFFLINE_CI"] = "1"
-    subprocess.call([py, "scripts/health/redis_check.py"], env=env)
-    subprocess.call([py, "scripts/health/rabbitmq_check.py"], env=env)
+
+    assert subprocess.call([PYTHON, "scripts/health/redis_check.py"], env=env) == 0
+    assert subprocess.call([PYTHON, "scripts/health/rabbitmq_check.py"], env=env) == 0
