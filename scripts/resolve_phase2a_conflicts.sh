@@ -3,6 +3,40 @@ set -euo pipefail
 
 say(){ echo -e "$@"; }
 
+# argument parsing
+TARGET_OVERRIDE=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --phase2a)
+      shift
+      PHASE2A_BRANCH="${1:-}"
+      if [[ -z "${PHASE2A_BRANCH}" ]]; then
+        say "❌ --phase2a requires a branch name"; exit 1
+      fi
+      ;;
+    --target)
+      shift
+      TARGET_OVERRIDE="${1:-}"
+      if [[ -z "${TARGET_OVERRIDE}" ]]; then
+        say "❌ --target requires a branch name"; exit 1
+      fi
+      ;;
+    --help|-h)
+      cat <<'USAGE'
+Usage: scripts/resolve_phase2a_conflicts.sh [--phase2a <branch>] [--target <branch>]
+
+  --phase2a   Explicit Phase-2A baseline branch to sync.
+  --target    Target branch to merge (default: origin/main or main).
+USAGE
+      exit 0
+      ;;
+    *)
+      say "⚠️ Unknown argument '$1' ignored";
+      ;;
+  esac
+  shift || true
+done
+
 # ensure we are inside a git repo
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   say "❌ Not a git repo"; exit 1
@@ -57,7 +91,9 @@ BK="backup/${WORK_BRANCH//\//-}-$(date +%Y%m%d-%H%M%S)"
 git branch -f "$BK" HEAD || true
 
 TARGET_REF="origin/main"
-if ! git show-ref --verify --quiet "refs/remotes/origin/main"; then
+if [[ -n "$TARGET_OVERRIDE" ]]; then
+  TARGET_REF="$TARGET_OVERRIDE"
+elif ! git show-ref --verify --quiet "refs/remotes/origin/main"; then
   if git show-ref --verify --quiet "refs/heads/main"; then
     TARGET_REF="main"
   else
