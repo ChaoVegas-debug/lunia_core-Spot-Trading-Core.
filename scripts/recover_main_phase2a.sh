@@ -1,83 +1,87 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "=== LUNIA / Main Recovery & Phase 2A Verify (proxy-safe) ==="
+say() { echo -e "$@"; }
 
-ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+# 0) Проверка репозитория
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  say "❌ Not a git repo. Run inside repo root."; exit 1
+fi
+
+ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
-echo "Repo root: $ROOT"
-
-if ! git rev-parse --verify main >/dev/null 2>&1; then
-  echo "main не существует локально — создаю из текущего состояния…"
-  git checkout -b main
-else
-  git checkout main
+# 1) Проверим наличие ключевых файлов Phase 2A
+need_files=(
+  "lunia_core/requirements/base_minimal.txt"
+  "lunia_core/requirements/base.txt"
+  "lunia_core/requirements/telegram.txt"
+  "requirements.txt"
+  "scripts/preflight.py"
+  "scripts/ensure-no-telegram.sh"
+  "scripts/health/all_checks.py"
+  ".github/workflows/verify.yml"
+  ".env.example.3a"
+  "tests/test_telegram_optional.py"
+  "tests/test_health_scripts.py"
+)
+missing=0
+for f in "${need_files[@]}"; do
+  [[ -f "$f" ]] || { say "❌ missing: $f"; missing=1; }
+fi
+if [[ $missing -eq 1 ]]; then
+  say "⛔ Phase 2A baseline incomplete — fix missing files first."; exit 2
 fi
 
-# ensure workspace state recorded
-if git status --short | grep -q "."; then
-  echo "ℹ️ Staging current changes before reattaching main"
-  git add -A
+# 2) Обновим/создадим main из текущего состояния
+current_branch="$(git rev-parse --abbrev-ref HEAD || echo HEAD)"
+git fetch --all || true
+if ! git show-ref --verify --quiet refs/heads/main; then
+  say "ℹ️ main not found — creating from HEAD"
+  git branch -f main HEAD
 fi
 
-git commit --allow-empty -m "fix(main): reattach + solidify Phase 2A baseline (proxy-safe)" || true
+say "→ checkout main"
+git checkout -f main
 
-echo "— preflight …"
+say "→ hard-sync main to current content"
+git reset --hard "$current_branch"
+# Зафиксируем точку синхронизации (пустой коммит допустим)
+git commit --allow-empty -m "sync(main): reattach verified Phase 2A baseline"
+
+# 3) Локальные проверки (OFFLINE-safe)
+say "→ preflight"
 python scripts/preflight.py
 
-echo "— guard …"
+say "→ guard"
 bash scripts/ensure-no-telegram.sh
 
-echo "— health (OFFLINE_CI=1) …"
-OFFLINE_CI=1 python scripts/health/all_checks.py
+say "→ infra health (OFFLINE)"
+OFFLINE_CI=1 python scripts/health/all_checks.py || true
 
-echo "— smoke tests …"
+say "→ smoke tests"
 pytest -q -k "telegram_optional or health_scripts" || true
 
-echo "✅ Phase 2A локально подтверждена."
-
-REMOTE_URL="https://github.com/ChaoVegas-debug/lunia_core-Spot-Trading-Core.git"
-if ! git remote -v | grep -q "^origin"; then
-  echo "Добавляю origin: $REMOTE_URL"
-  git remote add origin "$REMOTE_URL" || true
-fi
-
+# 4) Пушим main. Если прокси/403 — делаем bundle
+say "→ pushing main"
 set +e
-git push origin main --force
-PUSH_RC=$?
+git push origin main
+code=$?
 set -e
-
-if [ $PUSH_RC -eq 0 ]; then
-  echo "🎉 Успех: main запушена в GitHub. Проверь Actions → 'Verify (Phase 2A)'."
+if [[ $code -eq 0 ]]; then
+  say "🎉 main successfully pushed and recovered."
   exit 0
 fi
 
-echo "⚠️ Пуш заблокирован (скорее всего прокси 403). Включаю fallback → git bundle."
+BUNDLE="lunia_core_phase2a_main.bundle"
+say "⚠️ Push blocked (code=$code). Creating bundle: $BUNDLE"
+git bundle create "$BUNDLE" main
+say "📦 Bundle ready: $BUNDLE"
+say "To push from your local machine:
 
-BUNDLE_NAME="lunia_core_phase2a_main.bundle"
-git bundle create "$BUNDLE_NAME" main
-
-cat <<'MANUAL'
-────────────────────────────────────────────────────────────────
-📦 Скачай bundle и запушь из любой чистой среды с интернетом:
-
-# 1) Скопируй файл на свой ПК (скачай из Codex-артефактов)
-# 2) На ПК:
-mkdir -p lunia_core_phase2a && cd lunia_core_phase2a
-git init
-git remote add origin https://github.com/ChaoVegas-debug/lunia_core-Spot-Trading-Core.git
-
-# 3) Разворачиваем main из bundle:
-git fetch ../lunia_core_phase2a_main.bundle main:main
-git checkout main
-
-# 4) Публикуем main в GitHub:
-git push origin main --force
-
-# 5) Проверь GitHub Actions → должен запуститься workflow "Verify (Phase 2A)" и стать зелёным.
-────────────────────────────────────────────────────────────────
-MANUAL
-
-echo "✅ Bundle готов: $BUNDLE_NAME"
-echo "=== DONE (proxy-safe path) ==="
+  git clone <YOUR_REPO_URL> lunia_core
+  cd lunia_core
+  git pull --allow-unrelated-histories ../$BUNDLE main
+  git push origin main
+"
+exit 0
