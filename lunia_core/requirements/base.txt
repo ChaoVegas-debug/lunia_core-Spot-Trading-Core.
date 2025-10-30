@@ -1,2 +1,1 @@
 -r base_minimal.txt
-# Telegram support is optional — excluded from base profile
